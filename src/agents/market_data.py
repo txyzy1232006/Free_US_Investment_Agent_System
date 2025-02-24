@@ -30,13 +30,16 @@ def market_data_agent(state: AgentState):
 
     # 获取从start_date到current_date的所有数据
     prices = get_price_history(ticker, start_date, current_date)
-
+    print("prices:", prices)
     # 获取当前日期的财务和市场数据
     financial_metrics = get_financial_metrics(ticker)
+    print("financial_metrics:", financial_metrics)
     financial_line_items = get_financial_statements(ticker)
+    print("financial_line_items:", financial_line_items)
     insider_trades = get_insider_trades(ticker)
+    print("insider_trades:", insider_trades)
     market_data = get_market_data(ticker)
-
+    print("market_data:", market_data)
     return {
         "messages": messages,
         "data": {

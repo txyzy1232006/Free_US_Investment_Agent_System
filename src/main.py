@@ -84,6 +84,8 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
+    print(args)
+
     # Set default dates if not provided
     if not args.end_date:
         args.end_date = datetime.now().strftime('%Y-%m-%d')
