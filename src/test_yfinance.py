@@ -9,13 +9,16 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-def test_yfinance_data(ticker="AAPL", start_date="2023-11-20", end_date="2023-11-25"):
+def test_yfinance_data(ticker="NVDA", start_date="2024-11-20", end_date="2024-11-25"):
     """测试yfinance返回的数据格式"""
+    print(f"\nTesting yfinance data for {ticker} from {start_date} to {end_date}")
     logger.info(
         f"\nTesting yfinance data for {ticker} from {start_date} to {end_date}")
 
+
     # 1. 直接获取历史数据
     stock = yf.Ticker(ticker)
+    logger.info(f"L20: stock: {stock}")
     hist = stock.history(start=start_date, end=end_date)
 
     logger.info("\n1. Raw history data format:")
@@ -69,9 +72,21 @@ def test_yfinance_data(ticker="AAPL", start_date="2023-11-20", end_date="2023-11
     return hist
 
 
+def download_yfinance_data(ticker, start_date, end_date):
+    # 股票的名称
+    ticker = "NVDA"
+
+    # 每周
+    data = yf.download(ticker, start_date, end_date, ignore_tz = True, interval = '1d')
+
+    print(data)
+
 if __name__ == "__main__":
+    # 测试 download
+    download_yfinance_data('NVDA', '2024-11-20', '2024-11-25')
+    
     # 测试过去的数据
-    test_yfinance_data("AAPL", "2023-11-20", "2023-11-25")
+    test_yfinance_data("NVDA", "2024-11-20", "2024-11-25")
 
     # 测试最近的数据
     today = datetime.now()

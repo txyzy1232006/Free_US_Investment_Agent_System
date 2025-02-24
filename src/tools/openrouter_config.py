@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 from dataclasses import dataclass
 import backoff
 from typing import Optional, Dict, Any
+from openai import OpenAI
 
 # 设置日志记录
 logger = logging.getLogger('api_calls')
@@ -113,7 +114,7 @@ def generate_content_with_retry(model, contents, config=None):
             str(contents)) > 500 else f"请求内容: {contents}")
         logger.info(f"请求配置: {config}")
 
-        response = client.models.generate_content(
+        response = generate_content(
             model=model,
             contents=contents,
             config=config
@@ -144,24 +145,7 @@ def get_chat_completion(messages, model=None, max_retries=3, initial_retry_delay
 
         for attempt in range(max_retries):
             try:
-                # 转换消息格式
-                prompt = ""
-                system_instruction = None
-
-                for message in messages:
-                    role = message["role"]
-                    content = message["content"]
-                    if role == "system":
-                        system_instruction = content
-                    elif role == "user":
-                        prompt += f"User: {content}\n"
-                    elif role == "assistant":
-                        prompt += f"Assistant: {content}\n"
-
-                # 准备配置
-                config = {}
-                if system_instruction:
-                    config['system_instruction'] = system_instruction
+                
 
                 # 调用 API
                 response = generate_content_with_retry(
@@ -203,3 +187,53 @@ def get_chat_completion(messages, model=None, max_retries=3, initial_retry_delay
     except Exception as e:
         logger.error(f"{ERROR_ICON} get_chat_completion 发生错误: {str(e)}")
         return None
+
+def generate_content(model: str, messages: list):
+    # 推理运行计时
+    start_time = time.time()
+    res = dict()
+    if os.getenv("USE_OPENAI", "0") == "1" :
+        api_key = os.environ.get("OPENAI_API_KEY")
+        base_url = os.environ.get("OPENAI_BASE_URL")
+        model_id = os.environ.get("OPENAI_MODEL")
+        
+        client = OpenAI(
+            api_key=api_key, 
+            base_url=base_url,
+            # 深度推理模型耗费时间会较长，推荐为30分钟
+            timeout=1800,
+            )
+        response = client.chat.completions.create(
+            model=model_id,
+            messages=messages,
+        )
+        if hasattr(response.choices[0].message, 'reasoning_content'):
+            res["reasoning"] = response.choices[0].message.reasoning_content
+        res["content"] = response.choices[0].message.content
+    else:  
+        # 转换消息格式
+        prompt = ""
+        system_instruction = None
+
+        for message in messages:
+            role = message["role"]
+            content = message["content"]
+            if role == "system":
+                system_instruction = content
+            elif role == "user":
+                prompt += f"User: {content}\n"
+            elif role == "assistant":
+                prompt += f"Assistant: {content}\n"
+
+        # 准备配置
+        config = {}
+        if system_instruction:
+            config['system_instruction'] = system_instruction
+        res["reasoning"] = client.models.generate_content(
+                model=model,
+                contents=prompt.strip(),
+                config=config
+            )
+    end_time = time.time()
+    print(f"推理耗时: {end_time - start_time} 秒")
+    return res
