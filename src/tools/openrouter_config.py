@@ -106,23 +106,22 @@ logger.info(f"{SUCCESS_ICON} Gemini 客户端初始化成功")
     max_time=300,
     giveup=lambda e: "AFC is enabled" not in str(e)
 )
-def generate_content_with_retry(model, contents, config=None):
+def generate_content_with_retry(model, messages):
     """带重试机制的内容生成函数"""
     try:
         logger.info(f"{WAIT_ICON} 正在调用 Gemini API...")
-        logger.info(f"请求内容: {contents[:500]}..." if len(
-            str(contents)) > 500 else f"请求内容: {contents}")
-        logger.info(f"请求配置: {config}")
+        logger.info(f"请求内容: {messages[:500]}..." if len(
+            str(messages)) > 500 else f"请求内容: {messages}")
 
         response = generate_content(
             model=model,
-            contents=contents,
-            config=config
+            messages=messages
         )
 
         logger.info(f"{SUCCESS_ICON} API 调用成功")
-        logger.info(f"响应内容: {response.text[:500]}..." if len(
-            str(response.text)) > 500 else f"响应内容: {response.text}")
+        res_content = response["content"]
+        logger.info(f"响应内容: {res_content[:500]}..." if len(
+            str(res_content)) > 500 else f"响应内容: {res_content}")
         return response
     except Exception as e:
         if "AFC is enabled" in str(e):
@@ -146,12 +145,10 @@ def get_chat_completion(messages, model=None, max_retries=3, initial_retry_delay
         for attempt in range(max_retries):
             try:
                 
-
                 # 调用 API
                 response = generate_content_with_retry(
                     model=model,
-                    contents=prompt.strip(),
-                    config=config
+                    messages=messages
                 )
 
                 if response is None:
@@ -165,11 +162,12 @@ def get_chat_completion(messages, model=None, max_retries=3, initial_retry_delay
                     return None
 
                 # 转换响应格式
-                chat_message = ChatMessage(content=response.text)
+                response_content = response["content"]
+                chat_message = ChatMessage(content=response_content)
                 chat_choice = ChatChoice(message=chat_message)
                 completion = ChatCompletion(choices=[chat_choice])
 
-                logger.debug(f"API 原始响应: {response.text}")
+                logger.debug(f"API 原始响应: {response_content}")
                 logger.info(f"{SUCCESS_ICON} 成功获取响应")
                 return completion.choices[0].message.content
 

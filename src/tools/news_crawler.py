@@ -290,6 +290,31 @@ def get_news_sentiment(news_list: list, date: str = None, num_of_news: int = 5) 
         4. US stock market's specific reaction patterns"""
     }
 
+    chinese_system_message = {
+        "role": "system",
+        "content": """你是一名专业的美国股市分析师，专长于新闻情绪分析。你需要分析一组新闻文章，并给出一个介于 -1 到 1 之间的情绪评分：
+        - 1 代表极其积极（例如，重大利好消息、盈利突破、强大的行业支持）
+        - 0.5 到 0.9 代表积极（例如，盈利增长、新项目启动、赢得合同）
+        - 0.1 到 0.4 代表略微积极（例如，小合同签订、正常运营）
+        - 0 代表中性（例如，常规公告、人事变动、无重大影响的新闻）
+        - -0.1 到 -0.4 代表略微消极（例如，小诉讼、非核心业务亏损）
+        - -0.5 到 -0.9 代表消极（例如，业绩下滑、重大客户流失、行业监管收紧）
+        - -1 代表极其消极（例如，重大违规、核心业务严重亏损、监管处罚）
+        重点关注：
+        1.业绩相关：财务报告、盈利预测、收入 / 利润
+        2.政策影响：行业政策、监管政策、地方政策
+        3.市场表现：市场份额、竞争地位、商业模式
+        4.资本运作：并购、股权激励、增发
+        5.风险事件：诉讼、仲裁、处罚
+        6.行业地位：技术创新、专利、市场份额
+        7.舆论情况：媒体评价、社会影响
+        请务必分析：
+        1.新闻的真实性和可靠性
+        2.新闻的时效性和影响范围
+        3.对公司基本面的实际影响
+        4.美国股市的特定反应模式 """
+    }
+
     # Prepare news content
     news_content = "\n\n".join([
         f"Title: {news['title']}\n"
@@ -304,9 +329,14 @@ def get_news_sentiment(news_list: list, date: str = None, num_of_news: int = 5) 
         "content": f"Please analyze the sentiment of the following US stock related news:\n\n{news_content}\n\nPlease return only a number between -1 and 1, no explanation needed."
     }
 
+    chinese_user_message = {
+        "role": "user",
+        "content": f"请分析以下美国股票相关新闻的情感：\n\n{news_content}\n\n请仅返回一个介于-1和1之间的数字，不需要任何解释。"
+    }
+
     try:
         # Get LLM analysis result
-        result = get_chat_completion([system_message, user_message])
+        result = get_chat_completion([chinese_system_message, chinese_user_message])
         if result is None:
             logger.error("Error: LLM returned None")
             return 0.0

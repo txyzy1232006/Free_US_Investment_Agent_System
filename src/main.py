@@ -16,6 +16,14 @@ load_dotenv()  # 加载 .env 文件中的环境变量
 
 ##### Run the Hedge Fund #####
 def run_hedge_fund(ticker: str, start_date: str, end_date: str, portfolio: dict, show_reasoning: bool = False, num_of_news: int = 5):
+    
+    target_data = {
+        "ticker": ticker,
+        "portfolio": portfolio,
+        "start_date": start_date,
+        "end_date": end_date,
+        "num_of_news": num_of_news,
+    }
     final_state = app.invoke(
         {
             "messages": [
@@ -23,19 +31,13 @@ def run_hedge_fund(ticker: str, start_date: str, end_date: str, portfolio: dict,
                     content="Make a trading decision based on the provided data.",
                 )
             ],
-            "data": {
-                "ticker": ticker,
-                "portfolio": portfolio,
-                "start_date": start_date,
-                "end_date": end_date,
-                "num_of_news": num_of_news,
-            },
+            "data": target_data,
             "metadata": {
                 "show_reasoning": show_reasoning,
             }
         },
     )
-    return final_state["messages"][-1].content
+    return target_data, final_state["messages"][-1].content
 
 
 # Define the new workflow
@@ -122,7 +124,7 @@ if __name__ == "__main__":
         "stock": 0  # No initial stock position
     }
 
-    result = run_hedge_fund(
+    target, result = run_hedge_fund(
         ticker=args.ticker,
         start_date=args.start_date,
         end_date=args.end_date,
@@ -130,5 +132,5 @@ if __name__ == "__main__":
         show_reasoning=args.show_reasoning,
         num_of_news=args.num_of_news
     )
-    print("\nFinal Result:")
-    print(result)
+    print("\n分析目标:", target)
+    print("\n分析结论:", result)
